@@ -6,7 +6,10 @@
 #include <iostream>
 #include <random>
 #include <array>
+
+#ifndef NO_OMP
 #include <omp.h>
+#endif
 
 using card = uint_fast8_t;
 using cardval = uint_fast8_t;
@@ -106,10 +109,16 @@ int main()
 			random_draw(deck.begin(), deck.end(), hand_size, hand);
 			succeeded += is_success(hand.begin(), hand.begin() + hand_size);
 		}
+#ifdef NO_OMP
+		std::cout << "You have a " << (double(succeeded)/trials) * 100 << " percent chance of success when drawing " << hand_size << (hand_size == 1 ? " card" : " cards") << ".\n";
+#else
 		results[hand_size] = succeeded;
+#endif
 	}
 		
+#ifndef NO_OMP
 	for (size_t i = 1; i < max_hand_size; i++)
 		std::cout << "You have a " << (double(results[i])/trials) * 100 << " percent chance of success when drawing " << i << (i == 1 ? " card" : " cards") << ".\n";
+#endif
 
 }

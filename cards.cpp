@@ -22,7 +22,7 @@ using hand = std::array<card, max_hand_size>;
 
 constexpr std::array<const char*, 4> suitnames = {"\u2663", "\u2660", "\u2665", "\u2666"};
 
-constexpr std::array<const char*, 13> cardnames = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
+constexpr std::array<const char*, 14> cardnames = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
 
 constexpr cardval get_value(card c)
 {

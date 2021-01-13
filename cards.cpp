@@ -80,7 +80,6 @@ void print_deck(it begin, it end)
 		print_card(card);
 		std::cout << ' ';
 	});
-	std::cout << '\n';
 }
 
 constexpr cardval target_number = 8;

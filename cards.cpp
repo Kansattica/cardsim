@@ -20,13 +20,18 @@ constexpr size_t max_hand_size = 7;
 using deck = std::array<card, 52>;
 using hand = std::array<card, max_hand_size>;
 
-const char* suitnames[] = {"\u2663", "\u2660", "\u2665", "\u2666"};
+constexpr std::array<const char*, 4> suitnames = {"\u2663", "\u2660", "\u2665", "\u2666"};
 
-const char* cardnames[] = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
+constexpr std::array<const char*, 13> cardnames = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"};
 
-cardval get_value(card c)
+constexpr cardval get_value(card c)
 {
-	return c % 13;
+	const auto val = c % 13;
+	if constexpr (aces_high)
+	{
+		if (val == 0) { return 13; }
+	}
+	return val;
 }
 
 void print_card(card c)
@@ -34,7 +39,7 @@ void print_card(card c)
 	std::cout << cardnames[get_value(c)] << suitnames[c % 4];	
 }
 
-bool card_compare(const card& lhs, const card& rhs)
+constexpr bool card_compare(const card& lhs, const card& rhs)
 {
 	const auto leftval = get_value(lhs);
 	const auto rightval = get_value(rhs);
@@ -45,7 +50,7 @@ bool card_compare(const card& lhs, const card& rhs)
 }
 
 template <typename it>
-void sort_deck(it begin, it end)
+constexpr void sort_deck(it begin, it end)
 {
 	std::sort(begin, end, card_compare);
 }
@@ -83,10 +88,7 @@ constexpr cardval target_number = 8;
 template <typename it>
 bool is_success(it begin, it end)
 {
-	if constexpr (aces_high)
-		return std::any_of(begin, end, [](const auto card) { return get_value(card) >= target_number || get_value(card) == 0; });
-	else
-		return std::any_of(begin, end, [](const auto card) { return get_value(card) >= target_number; });
+	return std::any_of(begin, end, [](const auto card) { return get_value(card) >= target_number; });
 }
 
 int main()

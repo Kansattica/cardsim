@@ -6,6 +6,7 @@
 #include <iostream>
 #include <random>
 #include <array>
+#include <utility>
 
 #ifndef NO_OMP
 #include <omp.h>
@@ -84,10 +85,20 @@ void print_deck(it begin, it end)
 
 constexpr cardval target_number = 8;
 
-template <typename it>
-bool is_success(it begin, it end)
+using handtest = bool (hand& hand, size_t hand_size);
+
+bool is_success(hand& hand, size_t hand_size)
 {
-	return std::any_of(begin, end, [](const auto card) { return get_value(card) >= target_number; });
+	return std::any_of(hand.begin(), hand.begin() + hand_size, [](const auto card) { return get_value(card) >= target_number; });
+}
+
+bool is_pair(hand& hand, size_t hand_size)
+{
+	for (size_t idx = 0; idx < hand_size - 1; idx++)
+		for (size_t jdx = idx + 1; jdx < hand_size; jdx++)
+			if (get_value(hand[idx]) == get_value(hand[jdx]))
+				return true;
+	return false;
 }
 
 int main()
@@ -97,29 +108,29 @@ int main()
 
 	std::cout << "Target number is " << (int)target_number << " and aces are " << (aces_high ? "" : "not ") << "high.\n";
 	
-	std::array<size_t, max_hand_size> results;
+	constexpr size_t test_count = 2;
+	std::array<std::pair<handtest*, const char*>, test_count> tests = { std::make_pair(is_success, "success"), std::make_pair(is_pair, "pair") };
+	std::array<std::array<size_t, test_count>, max_hand_size + 1> results = {};
 	constexpr size_t trials = 10000000;
 
 #pragma omp parallel for
-	for (size_t hand_size = 1; hand_size < max_hand_size; hand_size++)
+	for (size_t hand_size = 1; hand_size <= max_hand_size; hand_size++)
 	{
 		hand hand;
 		size_t succeeded = 0;
 		for (size_t trial_n = 0; trial_n < trials; trial_n++)
 		{
 			random_draw(deck.begin(), deck.end(), hand_size, hand);
-			succeeded += is_success(hand.begin(), hand.begin() + hand_size);
+
+			for (size_t test_idx = 0; test_idx < test_count; test_idx++)
+			{
+				results[hand_size][test_idx] += tests[test_idx].first(hand, hand_size);
+			}
 		}
-#ifdef NO_OMP
-		std::cout << "You have a " << (double(succeeded)/trials) * 100 << " percent chance of success when drawing " << hand_size << (hand_size == 1 ? " card" : " cards") << ".\n";
-#else
-		results[hand_size] = succeeded;
-#endif
 	}
 		
-#ifndef NO_OMP
-	for (size_t i = 1; i < max_hand_size; i++)
-		std::cout << "You have a " << (double(results[i])/trials) * 100 << " percent chance of success when drawing " << i << (i == 1 ? " card" : " cards") << ".\n";
-#endif
+	for (size_t i = 1; i <= max_hand_size; i++)
+		for (size_t test_idx = 0; test_idx < test_count; test_idx++)
+			std::cout << "You have a " << (double(results[i][test_idx])/trials) * 100 << " percent chance of " << tests[test_idx].second << " when drawing " << i << (i == 1 ? " card" : " cards") << ".\n";
 
 }
